@@ -1,13 +1,16 @@
+from dotenv import load_dotenv
+import os
 import json
 import random
 import logging
 from telegram import Bot
 
-from dotenv import load_dotenv
-import os
-
 load_dotenv()
-TELEGRAM_TOKEN = os.getenv("7942021145:AAE4qMa-2KPxHclTlh34fkCs7-Zm2gBSyME")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+
+if not TELEGRAM_TOKEN:
+    raise ValueError("TELEGRAM_TOKEN не найден. Убедись, что он задан в .env или через Render Environment.")
+
 CHANNEL = "@yourchannel"
 bot = Bot(token=TELEGRAM_TOKEN)
 
@@ -31,7 +34,6 @@ def send_promo_message(channel_data):
         if channel_data["admin_id"]:
             bot.send_message(chat_id=channel_data["admin_id"], text=promo_text)
         else:
-            # Предполагаем отправку по username (если доступно)
             bot.send_message(chat_id=channel_data["username"], text=promo_text)
         logging.info(f"Sent promo to {channel_data['username']}")
         return True
@@ -46,7 +48,6 @@ def run_autopromo():
         if success:
             partners.append({"channel": ch["username"], "text": f"🤝 Поддержи партнёров: {ch['username']}"})
 
-    # Сохраняем в partners.json
     with open("partners.json", "w", encoding="utf-8") as f:
         json.dump(partners, f, ensure_ascii=False, indent=2)
 
