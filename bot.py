@@ -5,6 +5,7 @@ import feedparser
 import openai
 import html
 import threading
+import pytz
 from datetime import datetime
 from flask import Flask
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -102,7 +103,7 @@ def fetch_and_post_news():
             except Exception as e:
                 logging.warning(f"Telegram post failed: {e}")
 
-# Планировщик
-scheduler = BackgroundScheduler()
+# Планировщик с указанием временной зоны
+scheduler = BackgroundScheduler(timezone=pytz.timezone("Europe/Moscow"))
 scheduler.add_job(fetch_and_post_news, "interval", minutes=10)
 scheduler.start()
