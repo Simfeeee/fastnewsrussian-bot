@@ -3,7 +3,11 @@ import random
 import logging
 from telegram import Bot
 
-TELEGRAM_TOKEN = "YOUR_TOKEN"
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+TELEGRAM_TOKEN = 7942021145:AAE4qMa-2KPxHclTlh34fkCs7-Zm2gBSyME
 CHANNEL = "@yourchannel"
 bot = Bot(token=TELEGRAM_TOKEN)
 
