@@ -5,7 +5,8 @@ import logging
 import feedparser
 import telegram
 from datetime import datetime
-from apscheduler.schedulers.blocking import pytz
+import pytz
+from apscheduler.schedulers.blocking import BlockingScheduler
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -59,3 +60,4 @@ if __name__ == "__main__":
     scheduler.add_job(post_digest, "interval", hours=1)
     post_digest()  # Первый запуск сразу
     scheduler.start()
+    Fix pytz import and timezone config
