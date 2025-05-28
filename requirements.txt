@@ -1,9 +1,8 @@
 python-telegram-bot==20.3
 feedparser
 Flask
-openai
+openai==0.28
 apscheduler
 python-dotenv
 requests
 pillow
-pytz
