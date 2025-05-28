@@ -5,7 +5,7 @@ import logging
 import feedparser
 import telegram
 from datetime import datetime
-from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.blocking import pytz
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -55,7 +55,7 @@ def post_digest():
     bot.send_message(chat_id=CHANNEL, text=message, parse_mode=telegram.ParseMode.HTML)
 
 if __name__ == "__main__":
-    scheduler = BlockingScheduler()
+    scheduler = BlockingScheduler(timezone=pytz.timezone("Europe/Moscow"))
     scheduler.add_job(post_digest, "interval", hours=1)
     post_digest()  # Первый запуск сразу
     scheduler.start()
