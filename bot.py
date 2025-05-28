@@ -5,9 +5,9 @@ import logging
 import feedparser
 import telegram
 from datetime import datetime
-import pytz
 from apscheduler.schedulers.blocking import BlockingScheduler
 from dotenv import load_dotenv
+import pytz
 
 load_dotenv()
 
@@ -39,7 +39,7 @@ def fetch_news():
                     "summary": entry.summary if hasattr(entry, "summary") else "",
                     "published": entry.published if hasattr(entry, "published") else ""
                 })
-    return news_items[:5]  # только 5 свежих новостей
+    return news_items[:5]  # ÑÐ¾Ð»ÑÐºÐ¾ 5 ÑÐ²ÐµÐ¶Ð¸Ñ Ð½Ð¾Ð²Ð¾ÑÑÐµÐ¹
 
 def post_digest():
     logging.info("Posting news digest...")
@@ -49,14 +49,18 @@ def post_digest():
         return
 
     now = datetime.now().strftime('%Y-%m-%d %H:%M')
-    message = f"🗞️ <b>Дайджест новостей России — {now}</b>\n\n"
+    message = f"ðï¸ <b>ÐÐ°Ð¹Ð´Ð¶ÐµÑÑ Ð½Ð¾Ð²Ð¾ÑÑÐµÐ¹ Ð Ð¾ÑÑÐ¸Ð¸ â {now}</b>\n\n"
     for item in news:
-        message += f"• <b>{item['title']}</b>\n{item['link']}\n\n"
+        title = item['title'].strip()
+        summary = item['summary'].strip()
+        if len(summary) > 350:
+            summary = summary[:347] + "..."
+        message += f"ð <b>{title}</b>\n<i>{summary}</i>\n\n"
 
     bot.send_message(chat_id=CHANNEL, text=message, parse_mode=telegram.ParseMode.HTML)
 
 if __name__ == "__main__":
     scheduler = BlockingScheduler(timezone=pytz.timezone("Europe/Moscow"))
     scheduler.add_job(post_digest, "interval", hours=1)
-    post_digest()  # Первый запуск сразу
+    post_digest()  # ÐÐµÑÐ²ÑÐ¹ Ð·Ð°Ð¿ÑÑÐº ÑÑÐ°Ð·Ñ
     scheduler.start()
