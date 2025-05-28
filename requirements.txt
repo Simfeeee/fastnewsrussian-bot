@@ -1,7 +1,0 @@
-python-telegram-bot==13.15
-feedparser
-apscheduler
-python-dotenv
-openai
-flask
-feedparser
