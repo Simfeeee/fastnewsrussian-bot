@@ -6,6 +6,7 @@ import openai
 import html
 import threading
 import pytz
+import time
 from datetime import datetime
 from flask import Flask
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -28,9 +29,6 @@ app = Flask(__name__)
 @app.route("/")
 def home():
     return "Bot is alive!"
-def run_flask():
-    app.run(host="0.0.0.0", port=10000)
-threading.Thread(target=run_flask).start()
 
 # Новости
 FEEDS = [
@@ -115,6 +113,16 @@ def fetch_and_post_news():
             except Exception as e:
                 logging.warning(f"❌ Ошибка при публикации: {e}")
 
+# Планировщик с таймзоной
 scheduler = BackgroundScheduler(timezone=pytz.timezone("Europe/Moscow"))
 scheduler.add_job(fetch_and_post_news, "interval", minutes=10)
-scheduler.start()
+
+# Flask и запуск в фоне
+def run_flask():
+    app.run(host="0.0.0.0", port=10000)
+
+if __name__ == "__main__":
+    threading.Thread(target=run_flask, daemon=True).start()
+    scheduler.start()
+    while True:
+        time.sleep(60)
