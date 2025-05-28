@@ -62,17 +62,27 @@ def translate_to_russian(text):
 
 def fetch_and_post_news():
     global posted_titles
+    logging.info("🔄 Начинаем проверку лент...")
     for feed_url in FEEDS:
+        logging.info(f"📰 Чтение ленты: {feed_url}")
         feed = feedparser.parse(feed_url)
+        if not feed.entries:
+            logging.warning(f"❌ Нет записей в ленте: {feed_url}")
+            continue
         for entry in feed.entries[:3]:
             title = translate_to_russian(entry.title)
             summary = translate_to_russian(entry.summary)
             url = entry.link
+
+            logging.info(f"📌 Новость: {title}")
+
             if title in posted_titles:
+                logging.info("⏩ Уже публиковали, пропускаем")
                 continue
 
             reaction_json = generate_smart_reaction(title, summary)
             if not reaction_json:
+                logging.warning("❌ Не удалось сгенерировать аннотацию")
                 continue
 
             try:
@@ -80,8 +90,10 @@ def fetch_and_post_news():
                 annotation = reaction.get("annotation", "")
                 meme_text = reaction.get("meme_text", "")
                 category = reaction.get("category", "")
+                logging.info(f"🧠 Аннотация: {annotation}")
+                logging.info(f"🏷 Категория: {category}")
             except Exception as e:
-                logging.warning(f"Parsing smartgen failed: {e}")
+                logging.warning(f"❌ Ошибка разбора JSON от smartgen: {e}")
                 annotation = ""
                 meme_text = ""
                 category = ""
@@ -99,11 +111,10 @@ def fetch_and_post_news():
             try:
                 bot.send_message(chat_id=CHANNEL, text=caption, parse_mode='HTML', disable_web_page_preview=False)
                 posted_titles.add(title)
-                logging.info(f"Posted: {title}")
+                logging.info("✅ Опубликовано успешно")
             except Exception as e:
-                logging.warning(f"Telegram post failed: {e}")
+                logging.warning(f"❌ Ошибка при публикации: {e}")
 
-# Планировщик с указанием временной зоны
 scheduler = BackgroundScheduler(timezone=pytz.timezone("Europe/Moscow"))
 scheduler.add_job(fetch_and_post_news, "interval", minutes=10)
 scheduler.start()
