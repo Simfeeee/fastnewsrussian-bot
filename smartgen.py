@@ -1,10 +1,38 @@
 import openai
 import os
 import logging
+import random
 from dotenv import load_dotenv
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
+FALLBACK_REACTIONS = [
+    {
+        "annotation": "🤷 Похоже, очередной виток абсурда.",
+        "meme_text": "А мы говорили...",
+        "category": "общество",
+        "region": "мир"
+    },
+    {
+        "annotation": "🔥 Ну что ж, всё идёт по плану. Почти.",
+        "meme_text": "Грустно, но не удивительно",
+        "category": "политика",
+        "region": "Россия"
+    },
+    {
+        "annotation": "💼 Классика жанра — кто-то снова удивил.",
+        "meme_text": "Никогда такого не было и вот опять",
+        "category": "экономика",
+        "region": "Европа"
+    },
+    {
+        "annotation": "🧠 Видимо, они так видят.",
+        "meme_text": "Гении или безумцы?",
+        "category": "технологии",
+        "region": "США"
+    }
+]
 
 def generate_smart_reaction(title, summary):
     prompt = f"""
@@ -21,7 +49,6 @@ def generate_smart_reaction(title, summary):
   "region": "..."
 }}
 """
-
     try:
         completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -32,4 +59,7 @@ def generate_smart_reaction(title, summary):
         return completion["choices"][0]["message"]["content"].strip()
     except Exception as e:
         logging.warning(f"[ИИ-аннотация] Ошибка генерации: {e}")
-        return None
+        reaction = random.choice(FALLBACK_REACTIONS)
+        logging.info("[ИИ-аннотация] Используется fallback-аннотация.")
+        import json
+        return json.dumps(reaction, ensure_ascii=False)
