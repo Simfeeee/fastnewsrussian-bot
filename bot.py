@@ -1,3 +1,6 @@
+from flask import Flask
+import threading
+
 import os
 import logging
 import json
@@ -268,6 +271,17 @@ def start_bot():
     updater.start_polling()
     updater.idle()
 
+# Flask-сервер для Render
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
+
+def run_flask():
+    app.run(host="0.0.0.0", port=10000)
+
 if __name__ == "__main__":
     post_digest()
+    threading.Thread(target=run_flask).start()
     start_bot()
