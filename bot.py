@@ -152,15 +152,11 @@ def create_caption(item):
     comment = generate_comment(item['title'])
     meme = generate_meme_idea(item['title'])
 
-    caption = (
-        f"{emoji} <b>[{category} | {region}]</b>
+    caption = f"{emoji} <b>[{category} | {region}]</b>
 
-"
-        f"{item['title']}
+{item['title']}
 
-"
-        f"🧠 <i>{comment}</i>"
-    )
+🧠 <i>{comment}</i>"
     if meme:
         caption += f"
 
