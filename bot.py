@@ -1,3 +1,15 @@
+from flask import Flask
+import threading
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
+
+def run_flask():
+    app.run(host="0.0.0.0", port=10000)
+
 # bot.py (упрощённый блок с добавленным переводом и международными фидами)
 
 FEEDS = [
@@ -24,3 +36,5 @@ def translate_to_russian(text):
     except Exception as e:
         logging.warning(f"Translation error: {e}")
         return text
+
+threading.Thread(target=run_flask).start()
