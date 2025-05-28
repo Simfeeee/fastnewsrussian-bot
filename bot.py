@@ -1,5 +1,4 @@
 import os
-import time
 import logging
 import feedparser
 import telegram
@@ -25,7 +24,6 @@ FEEDS = [
 posted_links = set()
 
 def extract_image(entry):
-    # Ищем изображение в media:content или через ссылки
     media_content = entry.get('media_content', [])
     if media_content and 'url' in media_content[0]:
         return media_content[0]['url']
@@ -50,26 +48,25 @@ def fetch_news():
                     "image": extract_image(entry),
                     "published": entry.published if hasattr(entry, "published") else ""
                 })
-    return news_items[:3]  # только 3 самых свежих и визуально красивых
+    return news_items[:3]
+
+def create_caption(item):
+    title = item['title'].strip()
+    summary = item['summary'].strip()
+    if len(summary) > 300:
+        summary = summary[:297] + "..."
+    caption = f"🗞️ {title}\n\n🤔 {summary}\n\n✉ Fast News Russia"
+    return caption
 
 def post_digest():
-    logging.info("Posting news digest...")
+    logging.info("Posting stylized news...")
     news = fetch_news()
     if not news:
         logging.info("No new news found.")
         return
 
-    now = datetime.now().strftime('%Y-%m-%d %H:%M')
-    header = f"🗞️ <b>Дайджест новостей России — {now}</b>"
-
-    bot.send_message(chat_id=CHANNEL, text=header, parse_mode=telegram.ParseMode.HTML)
-
     for item in news:
-        title = item['title'].strip()
-        summary = item['summary'].strip()
-        if len(summary) > 300:
-            summary = summary[:297] + "..."
-        caption = f"📌 <b>{title}</b>\n<i>{summary}</i>"
+        caption = create_caption(item)
         try:
             if item['image']:
                 bot.send_photo(chat_id=CHANNEL, photo=item['image'], caption=caption, parse_mode=telegram.ParseMode.HTML)
@@ -81,5 +78,5 @@ def post_digest():
 if __name__ == "__main__":
     scheduler = BlockingScheduler(timezone=pytz.timezone("Europe/Moscow"))
     scheduler.add_job(post_digest, "interval", hours=1)
-    post_digest()  # Первый запуск сразу
+    post_digest()
     scheduler.start()
