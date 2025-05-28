@@ -85,21 +85,15 @@ def fetch_and_post_news():
                 meme_text = ""
                 category = ""
 
-            caption = f"<b>📰 {html.escape(title)}</b>
-
-"
+            caption = ""
+            caption += f"<b>📰 {html.escape(title)}</b>\n\n"
             if annotation:
-                caption += f"{html.escape(annotation)}
-
-"
-            caption += f"📎 <a href='{url}'>Читать полностью</a>
-"
+                caption += f"{html.escape(annotation)}\n\n"
+            caption += f"📎 <a href='{url}'>Читать полностью</a>\n"
             if category:
-                caption += f"🏷 Категория: <i>{html.escape(category)}</i>
-"
+                caption += f"🏷 Категория: <i>{html.escape(category)}</i>\n"
             if meme_text:
-                caption += f"
-🤡 Мем: <i>{html.escape(meme_text)}</i>"
+                caption += f"🤡 Мем: <i>{html.escape(meme_text)}</i>"
 
             try:
                 bot.send_message(chat_id=CHANNEL, text=caption, parse_mode='HTML', disable_web_page_preview=False)
