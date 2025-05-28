@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-TELEGRAM_TOKEN = 7942021145:AAE4qMa-2KPxHclTlh34fkCs7-Zm2gBSyME
+TELEGRAM_TOKEN = os.getenv("7942021145:AAE4qMa-2KPxHclTlh34fkCs7-Zm2gBSyME")
 CHANNEL = "@yourchannel"
 bot = Bot(token=TELEGRAM_TOKEN)
 
