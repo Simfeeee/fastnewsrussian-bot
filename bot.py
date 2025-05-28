@@ -60,4 +60,3 @@ if __name__ == "__main__":
     scheduler.add_job(post_digest, "interval", hours=1)
     post_digest()  # Первый запуск сразу
     scheduler.start()
-    Fix pytz import and timezone config
