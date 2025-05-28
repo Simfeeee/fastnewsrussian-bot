@@ -66,8 +66,10 @@ def fetch_news():
 
 def generate_ironic_comment(text):
     try:
-        prompt = f"Сделай ироничный, саркастичный или смешной комментарий к следующей новости:
-"{text}""
+        prompt = (
+  f"Сделай ироничный, саркастичный или смешной комментарий "
+    f"к следующей новости:\n\"{text}\""
+)
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
