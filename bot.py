@@ -37,6 +37,15 @@ CATEGORY_KEYWORDS = {
     "Технологии": ["ИИ", "технологии", "стартап", "искусственный интеллект", "роскосмос"]
 }
 
+REGIONS = {
+    "Москва": ["москва", "московский", "москве"],
+    "Санкт-Петербург": ["петербург", "спб", "санкт-петербург"],
+    "Сибирь": ["новосибирск", "томск", "омск", "красноярск"],
+    "Урал": ["екатеринбург", "челябинск", "пермь", "урал"],
+    "Кавказ": ["дагестан", "чечня", "грозный", "кавказ"],
+    "Дальний Восток": ["владивосток", "хабаровск", "сахалин", "дальний восток"]
+}
+
 INTERESTING_KEYWORDS = [
     "взорвал", "обрушил", "запретил", "ввёл", "объявил", "арест", "катастрофа",
     "сенсация", "историческое", "удивительно", "рекорд", "впервые", "неожиданно"
@@ -69,25 +78,16 @@ def detect_category(text):
             return category
     return "Общество"
 
-def is_interesting(title):
-    lower_title = title.lower()
-    return any(word in lower_title for word in INTERESTING_KEYWORDS)
-
-REGIONS = {
-    "Москва": ["москва", "московский", "москве"],
-    "Санкт-Петербург": ["петербург", "спб", "санкт-петербург"],
-    "Сибирь": ["новосибирск", "томск", "омск", "красноярск"],
-    "Урал": ["екатеринбург", "челябинск", "пермь", "урал"],
-    "Кавказ": ["дагестан", "чечня", "грозный", "кавказ"],
-    "Дальний Восток": ["владивосток", "хабаровск", "сахалин", "дальний восток"]
-}
-
 def detect_region(text):
     text = text.lower()
     for region, keywords in REGIONS.items():
         if any(kw in text for kw in keywords):
             return region
     return "Россия"
+
+def is_interesting(title):
+    lower_title = title.lower()
+    return any(word in lower_title for word in INTERESTING_KEYWORDS)
 
 def fetch_news():
     news_items = []
@@ -152,15 +152,15 @@ def create_caption(item):
     comment = generate_comment(item['title'])
     meme = generate_meme_idea(item['title'])
 
-    caption = f"{emoji} <b>[{category} | {region}]</b>
-
-{item['title']}
-
-🧠 <i>{comment}</i>"
+    caption_parts = [
+        f"{emoji} <b>[{category} | {region}]</b>",
+        item['title'],
+        f"🧠 <i>{comment}</i>"
+    ]
     if meme:
-        caption += f"
+        caption_parts.append(f"💬 <i>Идея для мема:</i> {meme}")
 
-💬 <i>Идея для мема:</i> {meme}"
+    caption = "\n\n".join(caption_parts)
     return caption
 
 def load_db():
@@ -232,23 +232,6 @@ def handle_reaction(update: Update, context: CallbackContext):
     except Exception as e:
         logging.warning(f"Could not send reaction message: {e}")
 
-def start_bot():
-    scheduler = BackgroundScheduler(timezone=pytz.timezone("Europe/Moscow"))
-    scheduler.add_job(post_digest, "interval", minutes=7)
-    
-    scheduler.add_job(post_top_news, "cron", hour=21, minute=0)
-
-    scheduler.start()
-
-    updater = Updater(TOKEN, use_context=True)
-    updater.dispatcher.add_handler(CallbackQueryHandler(handle_reaction))
-    updater.start_polling()
-    updater.idle()
-
-if __name__ == "__main__":
-    post_digest()
-    start_bot()
-
 def post_top_news():
     db = load_db()
     scored = []
@@ -273,3 +256,18 @@ def post_top_news():
     for i, item in enumerate(top_news):
         message += f"\n{medals[i]} {item['title']} — 👍{item['likes']} 😂{item['funny']} 😡{item['angry']}"
     bot.send_message(chat_id=CHANNEL, text=message, parse_mode=telegram.ParseMode.HTML)
+
+def start_bot():
+    scheduler = BackgroundScheduler(timezone=pytz.timezone("Europe/Moscow"))
+    scheduler.add_job(post_digest, "interval", minutes=7)
+    scheduler.add_job(post_top_news, "cron", hour=21, minute=0)
+    scheduler.start()
+
+    updater = Updater(TOKEN, use_context=True)
+    updater.dispatcher.add_handler(CallbackQueryHandler(handle_reaction))
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == "__main__":
+    post_digest()
+    start_bot()
