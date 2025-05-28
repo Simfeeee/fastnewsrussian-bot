@@ -105,6 +105,17 @@ def fetch_news():
             })
     return news_items[:1]
 
+def generate_comment(title):
+    try:
+        prompt_template = random.choice(PROMPTS)
+        prompt = prompt_template.format(title=title)
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=70,
+            temperature=0.95
+        )
+        return response['choices'][0]['message']['content'].strip()
     except Exception as e:
         logging.warning(f"OpenAI error: {e}")
         return "🤔 Ну и ну..."
@@ -140,7 +151,6 @@ def create_caption(item):
 
     comment = generate_comment(item['title'])
     meme = generate_meme_idea(item['title'])
-    promo = generate_promo(item['title'])
 
     caption_parts = [
         f"{emoji} <b>[{category} | {region}]</b>",
@@ -149,12 +159,8 @@ def create_caption(item):
     ]
     if meme:
         caption_parts.append(f"💬 <i>Идея для мема:</i> {meme}")
-    if promo:
-        caption_parts.append(promo)
 
-    caption = "
-
-".join(caption_parts)
+    caption = "\n\n".join(caption_parts)
     return caption
 
 def load_db():
@@ -255,109 +261,13 @@ def start_bot():
     scheduler = BackgroundScheduler(timezone=pytz.timezone("Europe/Moscow"))
     scheduler.add_job(post_digest, "interval", minutes=7)
     scheduler.add_job(post_top_news, "cron", hour=21, minute=0)
-    scheduler.add_job(post_partner_promo, "cron", hour=14, minute=0)
     scheduler.start()
 
     updater = Updater(TOKEN, use_context=True)
     updater.dispatcher.add_handler(CallbackQueryHandler(handle_reaction))
-    updater.dispatcher.add_handler(CommandHandler("start", handle_start))
-    updater.dispatcher.add_handler(CommandHandler("ref", handle_ref))
     updater.start_polling()
     updater.idle()
 
 if __name__ == "__main__":
     post_digest()
     start_bot()
-
-def generate_promo(title):
-    try:
-        prompt = (
-            f"Сделай 3-5 хештегов и короткий анонс (до 15 слов) по следующей новости. "
-            f"Формат: Анонс\n#хештег1 #хештег2 ...\n\nНовость: {title}"
-        )
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=70,
-            temperature=0.9
-        )
-        return response['choices'][0]['message']['content'].strip()
-    except Exception as e:
-        logging.warning(f"OpenAI promo generation error: {e}")
-        return ""
-
-REF_DB_PATH = "ref_db.json"
-
-def load_ref_db():
-    if not os.path.exists(REF_DB_PATH):
-        return {}
-    with open(REF_DB_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-def save_ref_db(data):
-    with open(REF_DB_PATH, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-def handle_start(update: Update, context: CallbackContext):
-    user = update.effective_user
-    args = context.args
-    referrer_id = args[0] if args else None
-
-    ref_db = load_ref_db()
-    if referrer_id and referrer_id != str(user.id):
-        if referrer_id not in ref_db:
-            ref_db[referrer_id] = {"invited": [], "joined": 0}
-        if str(user.id) not in ref_db[referrer_id]["invited"]:
-            ref_db[referrer_id]["invited"].append(str(user.id))
-            ref_db[referrer_id]["joined"] += 1
-            save_ref_db(ref_db)
-
-    welcome = "Привет! 👋 Ты подписался на умного новостного бота.
-"
-    welcome += "Хочешь пригласить друзей и получить бонусы? Поделись ссылкой:
-"
-    welcome += f"https://t.me/{context.bot.username}?start={user.id}"
-    update.message.reply_text(welcome)
-
-def handle_ref(update: Update, context: CallbackContext):
-    user_id = str(update.effective_user.id)
-    ref_db = load_ref_db()
-    if user_id in ref_db:
-        invited = ref_db[user_id]["joined"]
-        update.message.reply_text(f"Ты пригласил: {invited} пользователей 🎉")
-    else:
-        update.message.reply_text("Ты ещё никого не пригласил 😔")
-
-COMMENT_PROMPTS = [
-    "Напиши саркастичную, ироничную или абсурдную аннотацию к новости: \"{title}\"",
-    "Как бы эту новость обсудили в комментариях на злобном телеграм-канале? \"{title}\"",
-    "Если бы эту новость публиковал тролль — что бы он написал? \"{title}\"",
-    "Напиши реакцию на эту новость в стиле интернет-сарказма: \"{title}\"",
-    "Высмеи это заголовок с иронией, как будто ты автор сатирического канала: \"{title}\""
-]
-
-def generate_comment(title):
-    try:
-        prompt = random.choice(COMMENT_PROMPTS).format(title=title)
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=70,
-            temperature=1.0
-        )
-        return response['choices'][0]['message']['content'].strip()
-    except Exception as e:
-        logging.warning(f"OpenAI comment generation error: {e}")
-        return "🤔 Ну и ну..."
-
-def post_partner_promo():
-    try:
-        with open("partners.json", "r", encoding="utf-8") as f:
-            partners = json.load(f)
-        if not partners:
-            return
-        partner = random.choice(partners)
-        promo_text = partner["text"]
-        bot.send_message(chat_id=CHANNEL, text=promo_text)
-    except Exception as e:
-        logging.warning(f"Partner promo error: {e}")
