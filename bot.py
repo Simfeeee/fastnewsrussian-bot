@@ -1,3 +1,4 @@
+from autopromo import run_autopromo
 from flask import Flask
 import threading
 
